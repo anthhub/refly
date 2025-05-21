@@ -26,6 +26,7 @@ const MonacoEditorComponent = React.memo(
     readOnly = false,
     isGenerating = false,
     canvasReadOnly = false,
+    forceLoad,
     onChange,
   }: MonacoEditorProps) => {
     const { t } = useTranslation();
@@ -57,7 +58,8 @@ const MonacoEditorComponent = React.memo(
     // Start loading timeout when component mounts
     useEffect(() => {
       // Skip if we're already using fallback or if editor is ready
-      if (useFallbackEditor || isEditorReady || isGenerating || loadingTimedOut) return;
+      if (useFallbackEditor || isEditorReady || isGenerating || loadingTimedOut || forceLoad)
+        return;
 
       // Set a timeout to switch to SimpleTextEditor if loading takes too long
       loadTimeoutRef.current = setTimeout(() => {
@@ -74,7 +76,7 @@ const MonacoEditorComponent = React.memo(
           loadTimeoutRef.current = null;
         }
       };
-    }, [isEditorReady, useFallbackEditor, isGenerating, loadingTimedOut]);
+    }, [isEditorReady, useFallbackEditor, isGenerating, loadingTimedOut, forceLoad]);
 
     // Debounced onChange handler to prevent too frequent updates
     const debouncedOnChange = useMemo(

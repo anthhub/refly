@@ -44,6 +44,7 @@ export const McpServerJsonEditor: React.FC<McpServerJsonEditorProps> = ({
       {error && <Alert message={error} type="error" showIcon className="mb-4" />}
       <div style={{ height: '400px' }}>
         <MonacoEditor
+          forceLoad
           content={jsonString}
           language="json"
           type={'application/refly.artifacts.code'}

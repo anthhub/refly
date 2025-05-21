@@ -7,5 +7,6 @@ export interface MonacoEditorProps {
   readOnly?: boolean;
   isGenerating?: boolean;
   canvasReadOnly?: boolean;
+  forceLoad?: boolean;
   onChange?: (value: string) => void;
 }
