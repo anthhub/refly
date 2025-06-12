@@ -11,7 +11,7 @@ export class InternalMcpService {
     'token',
     'secret',
     'password',
-    'apiKey',
+    'apikey',
     'api_key',
     'key',
     'authorization',
@@ -64,38 +64,23 @@ export class InternalMcpService {
    * @returns Filtered data
    */
   private filterSensitiveFields(data: any): any {
-    if (data === null || data === undefined) {
+    if (!data || typeof data !== 'object') {
       return data;
     }
 
-    // If it's an array, recursively filter each element
     if (Array.isArray(data)) {
       return data.map((item) => this.filterSensitiveFields(item));
     }
 
-    // If it's an object, recursively filter each property
-    if (typeof data === 'object') {
-      const result = { ...data };
+    return Object.keys(data).reduce((acc, key) => {
+      const isSensitive = this.sensitiveFields.some((field) => key.toLowerCase().includes(field));
 
-      for (const key in result) {
-        // Check if the key name contains sensitive fields
-        const isKeySensitive = this.sensitiveFields.some((field) =>
-          key.toLowerCase().includes(field.toLowerCase()),
-        );
-
-        if (isKeySensitive) {
-          // If it's a sensitive field, replace with [REDACTED]
-          result[key] = '[REDACTED]';
-        } else if (typeof result[key] === 'object' && result[key] !== null) {
-          // Recursively filter nested objects
-          result[key] = this.filterSensitiveFields(result[key]);
-        }
+      if (isSensitive) {
+        acc[key] = '[REDACTED]';
+      } else {
+        acc[key] = this.filterSensitiveFields(data[key]);
       }
-
-      return result;
-    }
-
-    // Return primitive types directly
-    return data;
+      return acc;
+    }, {});
   }
 }
