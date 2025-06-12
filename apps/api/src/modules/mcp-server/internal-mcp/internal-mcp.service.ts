@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { McpServerService } from '../mcp-server/mcp-server.service';
+import { McpServerService } from '../mcp-server.service';
 import { EncryptionService } from '@/modules/common/encryption.service';
 
 @Injectable()

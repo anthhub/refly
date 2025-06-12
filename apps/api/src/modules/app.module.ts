@@ -33,7 +33,6 @@ import { CodeArtifactModule } from './code-artifact/code-artifact.module';
 import { PagesModule } from './pages/pages.module';
 import { ProjectModule } from './project/project.module';
 import { McpServerModule } from './mcp-server/mcp-server.module';
-import { InternalMcpModule } from './internal-mcp/internal-mcp.module';
 
 class CustomThrottlerGuard extends ThrottlerGuard {
   protected async shouldSkip(context: ExecutionContext): Promise<boolean> {
@@ -136,7 +135,6 @@ class CustomThrottlerGuard extends ThrottlerGuard {
     PagesModule,
     ProjectModule,
     McpServerModule,
-    InternalMcpModule,
   ],
   controllers: [AppController],
   providers: [

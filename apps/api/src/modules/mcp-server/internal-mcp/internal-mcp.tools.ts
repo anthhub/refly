@@ -2,10 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Tool, Context } from '@rekog/mcp-nest';
 import { z } from 'zod';
 import { Request } from 'express';
-import { McpServerService } from '../mcp-server/mcp-server.service';
+import { McpServerService } from '../mcp-server.service';
 import { InternalMcpService } from './internal-mcp.service';
 import { User as UserModel } from '@/generated/client';
-import { mcpServerPO2DTO } from '../mcp-server/mcp-server.dto';
+import { mcpServerPO2DTO } from '../mcp-server.dto';
 import { UpsertMcpServerRequest, DeleteMcpServerRequest } from '@refly/openapi-schema';
 
 @Injectable()
