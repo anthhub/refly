@@ -54,11 +54,22 @@ export class McpServerTools {
         type: params.type as any,
         enabled: params.enabled,
       };
+
       const servers = await this.mcpServerService.listMcpServers(user, queryParams);
-      const serverDTOs = servers.map(mcpServerPO2DTO);
+
+      // Convert servers to DTOs and filter out null values
+      const serverDTOs = servers
+        .map(mcpServerPO2DTO)
+        .filter((dto): dto is NonNullable<typeof dto> => dto !== null && dto !== undefined);
+
+      // Log the result for debugging
+      this.logger.log(
+        `Successfully retrieved ${serverDTOs.length} MCP servers for user ${user.uid}`,
+      );
 
       return this.internalMcpService.formatSuccessResponse(serverDTOs);
     } catch (error) {
+      this.logger.error(`Error listing MCP servers: ${error?.message || error}`, error);
       return this.internalMcpService.formatErrorResponse(error);
     }
   }
@@ -97,8 +108,16 @@ export class McpServerTools {
       );
 
       const server = await this.mcpServerService.createMcpServer(user, params);
-      return this.internalMcpService.formatSuccessResponse(mcpServerPO2DTO(server));
+      const serverDTO = mcpServerPO2DTO(server);
+
+      if (!serverDTO) {
+        throw new Error('Failed to convert created server to DTO format');
+      }
+
+      this.logger.log(`Successfully created MCP server: ${serverDTO.name} for user ${user.uid}`);
+      return this.internalMcpService.formatSuccessResponse(serverDTO);
     } catch (error) {
+      this.logger.error(`Error creating MCP server: ${error?.message || error}`, error);
       return this.internalMcpService.formatErrorResponse(error);
     }
   }
@@ -110,7 +129,6 @@ export class McpServerTools {
     name: 'update_mcp_server',
     description: 'Update an existing MCP server configuration',
     parameters: z.object({
-      pk: z.string().describe('Server primary key'),
       name: z.string().describe('Server name'),
       type: z.string().describe('Server type'),
       url: z.string().optional().describe('Server URL'),
@@ -138,8 +156,16 @@ export class McpServerTools {
       );
 
       const server = await this.mcpServerService.updateMcpServer(user, params);
-      return this.internalMcpService.formatSuccessResponse(mcpServerPO2DTO(server));
+      const serverDTO = mcpServerPO2DTO(server);
+
+      if (!serverDTO) {
+        throw new Error('Failed to convert updated server to DTO format');
+      }
+
+      this.logger.log(`Successfully updated MCP server: ${serverDTO.name} for user ${user.uid}`);
+      return this.internalMcpService.formatSuccessResponse(serverDTO);
     } catch (error) {
+      this.logger.error(`Error updating MCP server: ${error?.message || error}`, error);
       return this.internalMcpService.formatErrorResponse(error);
     }
   }
@@ -151,7 +177,7 @@ export class McpServerTools {
     name: 'delete_mcp_server',
     description: 'Delete MCP server configuration',
     parameters: z.object({
-      pk: z.string().describe('Server primary key'),
+      name: z.string().describe('Server name to delete'),
     }),
   })
   async deleteMcpServer(params: DeleteMcpServerRequest, _context: Context, request: Request) {
@@ -169,8 +195,15 @@ export class McpServerTools {
       );
 
       await this.mcpServerService.deleteMcpServer(user, params);
-      return this.internalMcpService.formatSuccessResponse({ success: true });
+
+      this.logger.log(`Successfully deleted MCP server: ${params.name} for user ${user.uid}`);
+      return this.internalMcpService.formatSuccessResponse({
+        success: true,
+        message: 'MCP server deleted successfully',
+        deletedServerName: params.name,
+      });
     } catch (error) {
+      this.logger.error(`Error deleting MCP server: ${error?.message || error}`, error);
       return this.internalMcpService.formatErrorResponse(error);
     }
   }
@@ -182,7 +215,6 @@ export class McpServerTools {
     name: 'validate_mcp_server',
     description: 'Validate if MCP server configuration is valid',
     parameters: z.object({
-      pk: z.string().optional().describe('Server primary key (required for updates)'),
       name: z.string().describe('Server name'),
       type: z.string().describe('Server type'),
       url: z.string().optional().describe('Server URL'),
@@ -223,8 +255,20 @@ export class McpServerTools {
         total: 100,
       });
 
-      return this.internalMcpService.formatSuccessResponse(result);
+      // Ensure result is properly formatted
+      const validationResult = {
+        success: true,
+        message: 'MCP server validation completed successfully',
+        tools: result || [],
+        toolCount: Array.isArray(result) ? result.length : 0,
+      };
+
+      this.logger.log(
+        `Successfully validated MCP server: ${params.name} for user ${user.uid}, found ${validationResult.toolCount} tools`,
+      );
+      return this.internalMcpService.formatSuccessResponse(validationResult);
     } catch (error) {
+      this.logger.error(`Error validating MCP server: ${error?.message || error}`, error);
       return this.internalMcpService.formatErrorResponse(error);
     }
   }

@@ -36,8 +36,10 @@ export class InternalMcpService {
    */
   formatErrorResponse(error: any): { content: Array<{ type: string; text: string }> } {
     this.logger.error('MCP Tool error:', error);
+    const errorMessage = error?.message || error?.toString() || 'Unknown error';
+
     return {
-      content: [{ type: 'text', text: `Error: ${error.message || 'Unknown error'}` }],
+      content: [{ type: 'text', text: `Error: ${errorMessage}` }],
     };
   }
 
@@ -45,17 +47,53 @@ export class InternalMcpService {
    * Format success response, filtering sensitive fields
    */
   formatSuccessResponse(data: any): { content: Array<{ type: string; text: string }> } {
-    // Filter sensitive fields
-    const filteredData = this.filterSensitiveFields(data);
+    try {
+      // Filter sensitive fields
+      const filteredData = this.filterSensitiveFields(data);
 
-    return {
-      content: [
-        {
-          type: 'application/json',
-          text: JSON.stringify(filteredData),
-        },
-      ],
-    };
+      // Ensure data is serializable and valid
+      const validatedData = this.validateAndCleanData(filteredData);
+
+      // Return structured response that's easier for AI models to parse
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Operation completed successfully. Result: ${JSON.stringify(validatedData, null, 2)}`,
+          },
+        ],
+      };
+    } catch (error) {
+      this.logger.error('Error formatting success response:', error);
+      return this.formatErrorResponse(error);
+    }
+  }
+
+  /**
+   * Validate and clean data to ensure it's properly serializable
+   */
+  private validateAndCleanData(data: any): any {
+    if (data === null || data === undefined) {
+      return null;
+    }
+
+    if (typeof data !== 'object') {
+      return data;
+    }
+
+    if (Array.isArray(data)) {
+      return data
+        .filter((item) => item !== null && item !== undefined)
+        .map((item) => this.validateAndCleanData(item));
+    }
+
+    return Object.keys(data).reduce((acc, key) => {
+      const value = data[key];
+      if (value !== null && value !== undefined) {
+        acc[key] = this.validateAndCleanData(value);
+      }
+      return acc;
+    }, {});
   }
 
   /**

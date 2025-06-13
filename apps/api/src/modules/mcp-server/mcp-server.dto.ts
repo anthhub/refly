@@ -5,20 +5,38 @@ import { pick } from '@/utils';
 /**
  * Convert McpServer PO to DTO
  */
-export const mcpServerPO2DTO = (server: McpServer): McpServerDTO => {
+export const mcpServerPO2DTO = (server: McpServer): McpServerDTO | null => {
   if (!server) {
-    return undefined;
+    return null;
   }
 
-  return {
-    ...pick(server, ['name', 'url', 'command', 'enabled', 'isGlobal']),
-    type: server.type as McpServerType,
-    args: server.args ? JSON.parse(server.args) : null,
-    env: server.env ? JSON.parse(server.env) : null,
-    headers: server.headers ? JSON.parse(server.headers) : null,
-    reconnect: server.reconnect ? JSON.parse(server.reconnect) : null,
-    config: server.config ? JSON.parse(server.config) : null,
-    createdAt: server.createdAt.toISOString(),
-    updatedAt: server.updatedAt.toISOString(),
-  };
+  try {
+    // Helper function to safely parse JSON with fallback
+    const safeJsonParse = (jsonString: string | null, fallback: any = null) => {
+      if (!jsonString) {
+        return fallback;
+      }
+      try {
+        return JSON.parse(jsonString);
+      } catch (error) {
+        console.warn('Failed to parse JSON:', jsonString, error);
+        return fallback;
+      }
+    };
+
+    return {
+      ...pick(server, ['name', 'url', 'command', 'enabled', 'isGlobal']),
+      type: server.type as McpServerType,
+      args: safeJsonParse(server.args, []) || [],
+      env: safeJsonParse(server.env, {}) || {},
+      headers: safeJsonParse(server.headers, {}) || {},
+      reconnect: safeJsonParse(server.reconnect, {}) || {},
+      config: safeJsonParse(server.config, {}) || {},
+      createdAt: server.createdAt?.toISOString() || new Date().toISOString(),
+      updatedAt: server.updatedAt?.toISOString() || new Date().toISOString(),
+    };
+  } catch (error) {
+    console.error('Error converting McpServer to DTO:', error);
+    return null;
+  }
 };
